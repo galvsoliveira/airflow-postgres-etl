@@ -1,0 +1,85 @@
+#!/bin/bash
+
+display_help() {
+	echo "======================================"
+	echo "   Airflow Local Runner CLI"
+	echo "======================================"
+	echo "Syntax: local-run [command]"
+	echo
+	echo "---commands---"
+	echo "help                   Print CLI help"
+	echo "build-image            Build Image Locally"
+	echo "build-and-start        Build Image Locally and Start Airflow local environment"
+	echo "configure-docker       Add credentials and set some variables"
+	echo "start                  Start Airflow local environment"
+	echo "start-att              Start Airflow local environment - Attended"
+	echo "stop                   Stop Airflow local environment"
+	echo "restart                Restart Airflow local environment"
+	echo
+}
+
+build_image() {
+	docker build --rm --compress -t project/airflow:latest .
+}
+
+start_att() {
+	docker compose -f ./docker-compose.yml -p project-airflow up
+}
+
+start() {
+	echo "Starting Airflow local environment"
+	find ../dags/* -maxdepth 0 -type d | while IFS= read -r filename; do
+		folder=${filename##*/}
+
+		if [[ ${folder} != "__pycache__" ]] && [[ ${folder} != "datahelper" ]] && [[ ${folder} != "$1" ]]; then
+			echo "${folder}*" >>../dags/.airflowignore
+		fi
+	done
+
+	docker compose -f ./docker-compose.yml -p project-airflow up -d
+}
+
+stop() {
+	docker compose -f ./docker-compose.yml -p project-airflow down
+}
+
+configure_docker() {
+	docker exec -i project-airflow-airflow-webserver-1 /bin/sh <./local-config.sh
+}
+
+case "$1" in
+build-image)
+	build_image
+	;;
+build-and-start)
+	build_image
+	start "$2"
+	configure_docker
+	;;
+configure-docker)
+	configure_docker
+	;;
+start)
+	start "$2"
+	;;
+stop)
+	stop
+	;;
+start-att)
+	start_att
+	;;
+restart)
+	stop
+	start "$2"
+	;;
+db-init)
+	db-init
+	;;
+help)
+	display_help
+	;;
+*)
+	echo "No command specified, displaying help"
+	display_help
+	;;
+esac

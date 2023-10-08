@@ -1,0 +1,33 @@
+[tool.poetry]
+name = "airflow-postgres-etl"
+version = "0.1.0"
+description = ""
+authors = ["Gustavo Oliveira <g.alvs.oliveira@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+apache-airflow = "2.7.1"
+
+
+[tool.poetry.group.dev.dependencies]
+pre-commit = "^3.4.0"
+detect-secrets = "^1.4.0"
+black = "^23.9.1"
+pylint = "^3.0.1"
+ruff = "^0.0.292"
+yamllint = "^1.32.0"
+sqlfluff = "^2.3.2"
+isort = "^5.12.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.pylint.BASIC]
+good-names= [
+  "airflow-postgres-etl",
+]
+
+[tool.pylint.master]
+init-hook = 'import sys; sys.path.append("./dags")'
