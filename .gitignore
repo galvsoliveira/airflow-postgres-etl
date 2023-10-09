@@ -1,0 +1,11 @@
+/git
+*.workspace
+dags/**/*.pyc
+/.idea
+/logs
+/db-data
+.DS_Store
+**/*.json
+*.log
+*/logs
+**/*.env
