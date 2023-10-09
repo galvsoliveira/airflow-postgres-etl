@@ -54,7 +54,7 @@ build-image)
 build-and-start)
 	build_image
 	start "$2"
-	# configure_docker -- bug
+	configure_docker
 	;;
 configure-docker)
 	configure_docker
