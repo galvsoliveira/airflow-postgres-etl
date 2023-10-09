@@ -1,10 +1,9 @@
+"""DAG para listar arquivos no diretório CSV_PATH e carregar no banco de dados"""
 from datetime import timedelta
+import os
+
 from airflow import DAG
 from airflow.utils.dates import days_ago
-import os
-from datetime import datetime
-import pandas as pd
-from sqlalchemy import Table, MetaData, Column, Integer, String, inspect, DateTime, func
 from airflow.providers.postgres.hooks.postgres import PostgresHook
 
 from datahelper.postgres import (
@@ -32,18 +31,11 @@ def list_files(path):
     return files
 
 
-# Default arguments for the DAG
 default_args = {
-    "owner": "airflow",
+    "owner": "Gustavo",
     "depends_on_past": False,
-    "email": ["your-email@example.com"],
-    "email_on_failure": False,
-    "email_on_retry": False,
-    "retries": 1,
-    "retry_delay": timedelta(minutes=5),
 }
 
-# Instantiate the DAG
 dag = DAG(
     "postgres_etl",
     default_args=default_args,

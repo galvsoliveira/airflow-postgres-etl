@@ -1,6 +1,5 @@
 """ Funções para projetos postgres """
 
-import os
 from datetime import datetime
 import pandas as pd
 from sqlalchemy import Table, MetaData, Column, Integer, String, inspect, DateTime, func
@@ -18,12 +17,10 @@ def delete_and_insert(table_name, data_list, unique_key, engine):
     metadata = MetaData()
     table = Table(table_name, metadata, autoload_with=engine)
 
-    # Inicia uma nova sessão que será fechada automaticamente
     with engine.begin() as connection:
-        # Obtém as chaves únicas de data_list
         unique_keys = [data[unique_key] for data in data_list]
 
-        # Executa a operação de delete
+        # Deleta as linhas na tabela que estão nos dados a serem inseridos
         delete = table.delete().where(table.c[unique_key].in_(unique_keys))
         connection.execute(delete)
 
