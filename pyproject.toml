@@ -6,10 +6,11 @@ authors = ["Gustavo Oliveira <g.alvs.oliveira@gmail.com>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.11"
+python = ">=3.11,<3.13"
 apache-airflow = "2.7.1"
 apache-airflow-providers-postgres = "^5.6.1"
 apache-airflow-providers-common-sql = "^1.7.2"
+pandas = "^2.1.1"
 
 
 [tool.poetry.group.dev.dependencies]
