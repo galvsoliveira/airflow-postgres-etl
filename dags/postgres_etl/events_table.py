@@ -1,4 +1,4 @@
-"""DAG para listar arquivos no diretório CSV_PATH e carregar no banco de dados"""
+"""DAG para fazer ETL para a tabela de eventos"""
 # pylint: disable=R0801
 import os
 from datetime import timedelta
