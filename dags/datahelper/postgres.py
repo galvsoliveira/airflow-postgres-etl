@@ -1,8 +1,9 @@
 """ Funções para projetos postgres """
 
 from datetime import datetime
+
 import pandas as pd
-from sqlalchemy import Table, MetaData, Column, Integer, String, inspect, DateTime, func
+from sqlalchemy import Column, DateTime, Integer, MetaData, String, Table, func, inspect
 
 
 def delete_and_insert(table_name, data_list, unique_key, engine):
@@ -75,7 +76,12 @@ def create_table_if_not_exists(table_name, columns_dict, engine):
     if not check_if_table_exists(table_name, engine):
         print(f"Creating table {table_name}...")
         metadata = MetaData()
-        columns = [Column(name, eval(type)) for name, type in columns_dict.items()]
+        type_dict = {
+            "String": String,
+            "Integer": Integer,
+            "DateTime": DateTime,
+        }
+        columns = [Column(name, type_dict[type]) for name, type in columns_dict.items()]
         table = Table(table_name, metadata, *columns)
         table.create(engine)
 
@@ -114,16 +120,23 @@ def process_data(df, datetime_columns, normalize_column=None, filter_columns=Non
     df = df.drop_duplicates()
     if normalize_column:
         df = explode_and_normalize(df, normalize_column)
+
+    # Convert timestamp columns to datetime
     cols_to_fix = set(datetime_columns).intersection(df.columns)
     for col in cols_to_fix:
         if col == "createdAt.$date":
-            df[col] = pd.to_datetime(df[col], unit="ms")
+            df.loc[:, col] = pd.to_datetime(df.loc[:, col], unit="ms")
             df = df.rename(columns={col: "orderCreatedAt"})
         else:
-            df[col] = pd.to_datetime(df[col], unit="s")
-    df["uploadDate"] = datetime.now()
+            df.loc[:, col] = pd.to_datetime(df.loc[:, col], unit="s")
+
+    # Add column "uploadDate"
+    df.loc[:, "uploadDate"] = datetime.now()
+
     if filter_columns:
         df = df[filter_columns + ["uploadDate", "fileName"]]
+
+    # Remove values that will have error while sending to Postgres
     df = df.replace(
         {"NaN": None, "NaT": None, "None": None, "": None, pd.NaT: None}
     ).drop_duplicates()
@@ -157,7 +170,7 @@ def explode_and_normalize(df, column_name):
     Returns:
         df_normalized: dataframe com os dados normalizados e sem a coluna original
     """
-    df[column_name] = df[column_name].apply(eval)
+    df.loc[:, column_name] = df.loc[:, column_name].apply(eval)
     df_normalized = df.explode(column_name)
     df_normalized = df_normalized.reset_index(drop=True)
     df_normalized = df_normalized.join(
@@ -166,6 +179,8 @@ def explode_and_normalize(df, column_name):
     return df_normalized
 
 
+# pylint: disable=too-many-arguments
+# pylint: disable=too-many-locals
 def send_files_to_postgres(
     files,
     csv_path,
@@ -211,6 +226,7 @@ def send_files_to_postgres(
             )
             print("Sending data to postgres...")
             delete_and_insert(target_table, df.to_dict("records"), unique_key, engine)
+            rows_inserted = len(df)
+            print(f"Data sent successfully. {rows_inserted} rows inserted.")
             df = pd.DataFrame()
-            print("Data sent successfully.")
     print("All files sent successfully.")

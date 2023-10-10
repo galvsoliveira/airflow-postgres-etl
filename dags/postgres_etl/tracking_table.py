@@ -1,15 +1,15 @@
 """DAG para listar arquivos no diretório CSV_PATH e carregar no banco de dados"""
-from datetime import timedelta
+# pylint: disable=R0801
 import os
+from datetime import timedelta
 
 from airflow import DAG
-from airflow.utils.dates import days_ago
 from airflow.providers.postgres.hooks.postgres import PostgresHook
-
+from airflow.utils.dates import days_ago
 from datahelper.postgres import (
-    send_files_to_postgres,
     check_if_table_exists,
     check_last_uploaded_file,
+    send_files_to_postgres,
 )
 
 POSTGRES_CONN_ID = "postgres-airflow"
@@ -63,6 +63,7 @@ def get_files_list():
     return files
 
 
+# pylint: disable=R0801
 @dag.task
 def get_last_uploaded_file():
     """Obtém o último arquivo carregado na tabela, se existir"""
@@ -96,6 +97,7 @@ def extract_treat_and_load(files, last_uploaded_file):
 
 _files = get_files_list()
 _last_uploaded_file = get_last_uploaded_file()
-_extract_treat_and_load = extract_treat_and_load(_files, _last_uploaded_file)
+_EXTRACT_TREAT_AND_LOAD = extract_treat_and_load(_files, _last_uploaded_file)
 
-_files >> _last_uploaded_file >> _extract_treat_and_load
+# pylint: disable=pointless-statement
+(_files >> _last_uploaded_file >> _EXTRACT_TREAT_AND_LOAD)
