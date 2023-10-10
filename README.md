@@ -170,6 +170,7 @@ def process_data(df, datetime_columns, normalize_column=None, filter_columns=Non
     Returns:
         df: dataframe com os dados processados
     """
+    df = df.drop_duplicates()
     if normalize_column:
         df = explode_and_normalize(df, normalize_column)
     cols_to_fix = set(datetime_columns).intersection(df.columns)
@@ -182,7 +183,9 @@ def process_data(df, datetime_columns, normalize_column=None, filter_columns=Non
     df["uploadDate"] = datetime.now()
     if filter_columns:
         df = df[filter_columns + ["uploadDate", "fileName"]]
-    df = df.replace({"NaN": None, "NaT": None, "None": None, "": None, pd.NaT: None})
+    df = df.replace(
+        {"NaN": None, "NaT": None, "None": None, "": None, pd.NaT: None}
+    ).drop_duplicates()
     return df
 ```
 
