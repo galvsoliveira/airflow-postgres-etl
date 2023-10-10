@@ -28,12 +28,15 @@ start_att() {
 
 start() {
 	echo "Starting Airflow local environment"
-	find ../dags/* -maxdepth 0 -type d | while IFS= read -r filename; do
+	> ../dags/.airflowignore
+
+	for filename in $(find ../dags/* -maxdepth 0 -type d); do
+
 		folder=${filename##*/}
 
-		if [[ ${folder} != "__pycache__" ]] && [[ ${folder} != "datahelper" ]] && [[ ${folder} != "$1" ]]; then
-			echo "${folder}*" >>../dags/.airflowignore
-		fi
+		if [ $folder != "__pycache__" ] && [ $folder != "datahelper" ] && [ $folder != $1 ]; then
+			echo "$folder*" >> ../dags/.airflowignore;
+		fi;
 	done
 
 	docker compose -f ./docker-compose.yml -p project-airflow up -d
