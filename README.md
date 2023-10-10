@@ -12,6 +12,7 @@ Neste projeto, efetuo um ETL de arquivos csv para um banco de dados Postgres uti
 - [Estrutura do Projeto](#estrutura-do-projeto)
 - [Estrutura das DAGs](#estrutura-das-dags)
 - [Rodando o Projeto](#rodando-o-projeto)
+- [Potenciais Problemas a Serem Investigados em Próximas Versões](#potenciais-problemas-a-serem-investigados-em-próximas-versões)
 - [Melhorias](#melhorias)
 
 ---
@@ -202,8 +203,12 @@ O lineage das DAGs é o seguinte:
 
 ![Alt text](data/image-2.png)
 
+## Potenciais Problemas a Serem Investigados em Próximas Versões
+
+Como fazemos um explode seguido de uma normalização, o número de linhas por arquivo escala bastante, o que faz o envio de dados para o banco de dados demorar muito no caso da tabela de eventos, mesmo fazendo um batch de um arquivo só. Isso pode ser potencialmente resolvido escolhendo uma abordagem ELT ao invés de ETL, deixando o processamento para o banco de dados, não necessitando mais de diversas conexões para enviar os dados. Vale a pena investigar também a performance do SQLAchemy, que é utilizado pelo Airflow para se conectar com o Postgres, e ver se é possível melhorar a performance do envio utilizando outra ferramenta.
+
 ## Melhorias
 
 Uma melhoria legal que pode ser feita nesse projeto é a utilização do MongoDB para armazenar os dados brutos, e o Postgres para armazenar os dados tratados. O MongoDB é um banco de dados não relacional, e é muito utilizado para armazenar dados provenientes de Tech, enquanto o Postgres acaba sendo mais utilizado para armazenar dados tratados. O Airflow permite fazer a conexão com o MongoDB e o Postgres, então seria possível fazer essa migração facilmente.
 
-Outra melhoria interessante seria o dbt, que é uma ferramenta de transformação de dados. O dbt permite que as transformações sejam feitas no próprio banco de dados, e também permite a criação de testes automatizados para garantir a qualidade dos dados. Dessa forma, teríamos um ELT, em que os dados brutos são contidos no MongoDB, replicados para o Postgres, e transformados no próprio Postgres com o dbt.
+Outra melhoria interessante seria o dbt, que é uma ferramenta de transformação de dados. O dbt permite que as transformações sejam feitas no próprio banco de dados, e também permite a criação de testes automatizados para garantir a qualidade dos dados. Dessa forma, teríamos um ELT, em que os dados brutos são contidos no MongoDB, replicados para o Postgres, e transformados no próprio Postgres com o dbt. Acredito que essa seria uma solução mais escalável e possivelmente mais rápida, já que os dados já estariam dentro do banco e o envio e tratamento não ficariam abrindo e fechando conexões com o banco de dados, além de podermos implementar diversos testes de forma bastante simples com o dbt, garantindo a qualidade dos dados.
