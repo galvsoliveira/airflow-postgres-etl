@@ -209,7 +209,7 @@ O lineage das DAGs é o seguinte:
 
 ## Potenciais Problemas a Serem Investigados em Próximas Versões
 
-Como fazemos um explode seguido de uma normalização, o número de linhas por arquivo escala bastante, o que faz o envio de dados para o banco de dados demorar muito no caso da tabela de eventos, mesmo fazendo um batch de um arquivo só. Isso pode ser potencialmente resolvido escolhendo uma abordagem ELT ao invés de ETL, deixando o processamento para o banco de dados, não necessitando mais de diversas conexões para enviar os dados. Vale a pena investigar também a performance do SQLAchemy, que é utilizado pelo Airflow para se conectar com o Postgres, e ver se é possível melhorar a performance do envio utilizando outra ferramenta.
+Como fazemos um explode seguido de uma normalização, o número de linhas por arquivo escala bastante, o que faz o envio de dados para o banco de dados demorar muito no caso da tabela de eventos. Notei também que o problema de perfomance é devido ao DELETE ser usado antes do INSERT e com diversos parametros. Isso pode ser potencialmente resolvido escolhendo uma abordagem ELT ao invés de ETL, deixando o processamento para o banco de dados, não necessitando mais de diversas conexões para enviar os dados. Vale a pena investigar também a performance do SQLAchemy, que é utilizado pelo Airflow para se conectar com o Postgres, e ver se é possível melhorar a performance do envio utilizando outra ferramenta.
 
 ## Melhorias
 
