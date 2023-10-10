@@ -3,7 +3,16 @@
 from datetime import datetime
 
 import pandas as pd
-from sqlalchemy import Column, DateTime, Integer, MetaData, String, Table, func, inspect
+from sqlalchemy import (
+    Column,
+    DateTime,
+    Integer,
+    MetaData,
+    String,
+    Table,
+    func,
+    inspect,
+)
 
 
 def delete_and_insert(table_name, data_list, unique_key, engine):
@@ -19,7 +28,7 @@ def delete_and_insert(table_name, data_list, unique_key, engine):
     table = Table(table_name, metadata, autoload_with=engine)
 
     with engine.begin() as connection:
-        unique_keys = [data[unique_key] for data in data_list]
+        unique_keys = list(set(data[unique_key] for data in data_list))
 
         # Deleta as linhas na tabela que estão nos dados a serem inseridos
         delete = table.delete().where(table.c[unique_key].in_(unique_keys))
