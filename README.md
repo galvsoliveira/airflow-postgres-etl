@@ -219,4 +219,5 @@ Outra melhoria interessante seria o dbt, que é uma ferramenta de transformaçã
 O projeto foi baseado em um projeto anterior meu (<https://github.com/galvsoliveira/python-poetry-production-level-repository-template>) e nos seguinte tutoriais:
 - <https://www.youtube.com/watch?v=mMqaiNbeeUU&t=943s&ab_channel=Codifike>. Para configurar o Airflow e o Postgres.
 - <https://essentl.io/running-astronomer-cosmos-in-mwaa/> Para alterar o docker-compose.yml.
-- Projetos que já participei no trabalho, que utilizavam o Airflow.
+
+Ressalto que também já tinha conhecimento prévio sobre o Airflow em experiências profissionais.
