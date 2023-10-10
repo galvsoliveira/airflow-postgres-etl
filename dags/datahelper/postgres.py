@@ -80,7 +80,7 @@ def create_table_if_not_exists(table_name, columns_dict, engine):
         table.create(engine)
 
 
-def check_last_uploaded_file(table_name, engine, column="file_name"):
+def check_last_uploaded_file(table_name, engine, column="fileName"):
     """Verifica o último arquivo enviado para o banco de dados
 
     Args:
@@ -99,25 +99,80 @@ def check_last_uploaded_file(table_name, engine, column="file_name"):
         return last_uploaded_file[0]
 
 
-def process_data(df, datetime_columns):
+def process_data(df, datetime_columns, normalize_column=None, filter_columns=None):
     """Processa os dados antes de enviá-los para o banco de dados
 
     Args:
         df: dataframe com os dados
         datetime_columns: colunas que devem ser do tipo DateTime
+        normalize_column (str, optional): coluna que deve ser "explodida" em linhas
+        filter_columns (list, optional): colunas que devem ser mantidas
 
     Returns:
         df: dataframe com os dados processados
     """
-    for col in datetime_columns:
-        if col in df.columns:
+    if normalize_column:
+        df = explode_and_normalize(df, normalize_column)
+    cols_to_fix = set(datetime_columns).intersection(df.columns)
+    for col in cols_to_fix:
+        if col == "createdAt.$date":
+            df[col] = pd.to_datetime(df[col], unit="ms")
+            df = df.rename(columns={col: "orderCreatedAt"})
+        else:
             df[col] = pd.to_datetime(df[col], unit="s")
-    df["upload_date"] = datetime.now()
+    df["uploadDate"] = datetime.now()
+    if filter_columns:
+        df = df[filter_columns + ["uploadDate", "fileName"]]
+    df = df.replace({"NaN": None, "NaT": None, "None": None, "": None, pd.NaT: None})
     return df
 
 
+def read_file(file, csv_path):
+    """Lê um arquivo csv e retorna um dataframe com um
+    campo extra com o nome do arquivo
+
+    Args:
+        file: Nome do arquivo
+        csv_path: Caminho para os arquivos
+
+    Returns:
+        df: dataframe com os dados
+    """
+    df = pd.read_csv(f"{csv_path}/{file}")
+    df["fileName"] = file
+    return df
+
+
+def explode_and_normalize(df, column_name):
+    """Explode uma coluna, criando uma linha para cada elemento da lista de dicts
+    e depois normaliza os dados do dict em colunas
+
+    Args:
+        df: dataframe com os dados
+        column_name: coluna para aplicação
+
+    Returns:
+        df_normalized: dataframe com os dados normalizados e sem a coluna original
+    """
+    df[column_name] = df[column_name].apply(eval)
+    df_normalized = df.explode(column_name)
+    df_normalized = df_normalized.join(
+        pd.json_normalize(df_normalized[column_name])
+    ).drop(columns=[column_name])
+    return df_normalized
+
+
 def send_files_to_postgres(
-    files, csv_path, target_table, engine, datetime_columns, int_columns, unique_key
+    files,
+    csv_path,
+    target_table,
+    engine,
+    datetime_columns,
+    int_columns,
+    unique_key,
+    filter_columns,
+    normalize_column=None,
+    n_batch=5,
 ):
     """Envia os arquivos para uma tabela no banco de dados, criando-a se necessário
     e atualizando os dados se a tabela já existir. O tratamento dos dados é feito
@@ -131,17 +186,19 @@ def send_files_to_postgres(
         datetime_columns: Colunas que devem ser do tipo DateTime
         int_columns: Colunas que devem ser do tipo Integer
         unique_key: Nome da chave única
+        normalize_column: Lista de colunas que devem ser "explodidas" em linhas
+            e normalizadas
+        filter_columns: Lista de colunas que devem ser mantidas
     """
     file_counter = 0
     df = pd.DataFrame()
     for file in files:
         file_counter += 1
         print(f"Reading file {file_counter} of {len(files)}")
-        temp_df = pd.read_csv(f"{csv_path}/{file}")
-        temp_df["file_name"] = file
+        temp_df = read_file(file, csv_path)
         df = pd.concat([df, temp_df])
-        if file_counter % 5 == 0 or file_counter == len(files):
-            df = process_data(df, datetime_columns)
+        if file_counter % n_batch == 0 or file_counter == len(files):
+            df = process_data(df, datetime_columns, normalize_column, filter_columns)
             columns_dict = create_columns_dict(df, datetime_columns, int_columns)
             create_table_if_not_exists(
                 target_table,
