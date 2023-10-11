@@ -114,19 +114,22 @@ def check_last_uploaded_file(table_name, engine, column="fileName"):
         return last_uploaded_file[0]
 
 
-def process_data(df, datetime_columns, normalize_column=None, filter_columns=None):
+def process_data(
+    df, datetime_columns, unique_key, normalize_column=None, filter_columns=None
+):
     """Processa os dados antes de enviá-los para o banco de dados
 
     Args:
         df: dataframe com os dados
         datetime_columns: colunas que devem ser do tipo DateTime
+        unique_key: nome da chave única
         normalize_column (str, optional): coluna que deve ser "explodida" em linhas
         filter_columns (list, optional): colunas que devem ser mantidas
 
     Returns:
         df: dataframe com os dados processados
     """
-    df = df.drop_duplicates()
+    df.drop_duplicates(subset=[unique_key], keep="last")
     if normalize_column:
         df = explode_and_normalize(df, normalize_column)
 
@@ -226,7 +229,9 @@ def send_files_to_postgres(
         temp_df = read_file(file, csv_path)
         df = pd.concat([df, temp_df])
         if file_counter % n_batch == 0 or file_counter == len(files):
-            df = process_data(df, datetime_columns, normalize_column, filter_columns)
+            df = process_data(
+                df, datetime_columns, unique_key, normalize_column, filter_columns
+            )
             columns_dict = create_columns_dict(df, datetime_columns, int_columns)
             create_table_if_not_exists(
                 target_table,
