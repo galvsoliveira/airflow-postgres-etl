@@ -251,6 +251,18 @@ O lineage das DAGs é o seguinte:
 
 ## Queries de teste
 
+Para testar o projeto, use as seguintes credenciais do Postgres para fazer a conexão:
+
+```txt
+host: localhost
+port: 5432
+username: airflow
+password: airflow
+database: postgres
+```
+
+Você pode uma extensão do VSCode com id `cweijan.vscode-postgresql-client2` (busque no marketplace de extensões do VSCode) para fazer as queries diretamente no VSCode. Seguem algumas queries de teste:
+
 Total de rastreamentos criados por minuto:
 
 ```sql
