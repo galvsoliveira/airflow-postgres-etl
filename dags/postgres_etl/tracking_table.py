@@ -47,7 +47,7 @@ default_args = {
 }
 
 dag = DAG(
-    "postgres_etl.tracking_etl",
+    "postgres_etl.tracking_table",
     default_args=default_args,
     description="A simple DAG to list files in the data directory",
     schedule_interval=timedelta(days=1),
