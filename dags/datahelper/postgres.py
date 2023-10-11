@@ -138,7 +138,7 @@ def process_data(
     for col in cols_to_fix:
         if col == "createdAt.$date":
             df.loc[:, col] = pd.to_datetime(df.loc[:, col], unit="ms")
-            df = df.rename(columns={col: "orderCreatedAt"})
+            df = df.rename(columns={col: "eventCreatedAt"})
         else:
             df.loc[:, col] = pd.to_datetime(df.loc[:, col], unit="s")
 

@@ -24,7 +24,7 @@ DATETIME_COLUMNS = [
     "lastSyncTracker",
     "createdAt",
     "createdAt.$date",
-    "orderCreatedAt",
+    "eventCreatedAt",
     "uploadDate",
 ]
 EVENTS_COLUMNS = [
@@ -35,7 +35,7 @@ EVENTS_COLUMNS = [
     "trackerType",
     "from",
     "to",
-    "orderCreatedAt",
+    "eventCreatedAt",
 ]
 COLUMN_TO_EXPLODE = "array_trackingEvents"
 
