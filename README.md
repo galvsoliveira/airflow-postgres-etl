@@ -65,6 +65,9 @@ airflow-postgres-etl/
   - `bash config-scripts/02_install_asdf_plugins.sh`
   - `bash config-scripts/03_install_proj_dep.sh`
 - Abra o VSCode usando o comando `code .`.
+- Instale o Docker e o Docker Compose.
+  - Para WSL2, siga o tutorial: <https://docs.docker.com/desktop/windows/wsl/>.
+  - Para Ubuntu, siga o tutorial: <https://docs.docker.com/engine/install/ubuntu/>.
 - Renomeie o arquivo `credentials.json.example` para `credentials.json`. As credenciais do exemplo são as mesmas do arquivo `docker-compose.yml`.
 
 ## Motivação
