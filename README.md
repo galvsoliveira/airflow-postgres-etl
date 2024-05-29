@@ -1,51 +1,51 @@
-# Airflow-Postgres ETL (Ubuntu/WSL2) <!-- omit in toc -->
+# Airflow-Postgres ETL (Ubuntu/WSL2)
 
-Neste projeto, efetuo um ETL de arquivos csv para um banco de dados Postgres utilizando o Airflow. O projeto foi desenvolvido em Ubuntu/WSL2.
-
----
-
-## Table of Contents <!-- omit in toc -->
-
-- [Estrutura do Repositório](#estrutura-do-repositório)
-- [Configurando a Máquina](#configurando-a-máquina)
-- [Motivação](#motivação)
-- [Estrutura do Projeto](#estrutura-do-projeto)
-- [Estrutura das DAGs](#estrutura-das-dags)
-- [Rodando o Projeto](#rodando-o-projeto)
-- [Queries de teste](#queries-de-teste)
-- [Potenciais Problemas a Serem Investigados em Próximas Versões](#potenciais-problemas-a-serem-investigados-em-próximas-versões)
-- [Melhorias](#melhorias)
-- [Referências](#referências)
+In this project, I perform an ETL (Extract, Transform, Load) process on CSV files to a Postgres database using Airflow. The project was developed on Ubuntu/WSL2.
 
 ---
 
-## Estrutura do Repositório
+## Table of Contents
 
-O projeto está estruturado da seguinte forma:
+- [Repository Structure](#repository-structure)
+- [Machine Configuration](#machine-configuration)
+- [Motivation](#motivation)
+- [Project Structure](#project-structure)
+- [DAGs Structure](#dags-structure)
+- [Running the Project](#running-the-project)
+- [Test Queries](#test-queries)
+- [Potential Issues for Future Versions](#potential-issues-for-future-versions)
+- [Improvements](#improvements)
+- [References](#references)
+
+---
+
+## Repository Structure
+
+The project is structured as follows:
 
 ```txt
 airflow-postgres-etl/
 ├── config-scripts/
-│ ├── 01_config_ubuntu_env.sh
-│ ├── 02_install_asdf_plugins.sh
-│ ├── 03_install_proj_dep.sh
-│ ├── 04_requirements_txt_to_poetry(optional).sh
-│ ├── stuck_resolving_dependencies_fix.sh
-│ └── unistall_env.sh
+│   ├── 01_config_ubuntu_env.sh
+│   ├── 02_install_asdf_plugins.sh
+│   ├── 03_install_proj_dep.sh
+│   ├── 04_requirements_txt_to_poetry(optional).sh
+│   ├── stuck_resolving_dependencies_fix.sh
+│   └── uninstall_env.sh
 ├── dags/
-│ ├── __init__.py
-│ ├── .airflowignore
-│ ├── datahelper/
-│ │ ├── __init__.py
-│ │ └── postgres.py
-│ └── postgres_etl/
-│   ├── events_table.py
-│   └── tracking_table.py
+│   ├── __init__.py
+│   ├── .airflowignore
+│   ├── datahelper/
+│   │   ├── __init__.py
+│   │   └── postgres.py
+│   └── postgres_etl/
+│       ├── events_table.py
+│       └── tracking_table.py
 ├── data/
-│ ├── extracted/
-│ └── data.zip
+│   ├── extracted/
+│   └── data.zip
 ├── initial-script/
-│ └── extract-zip.py
+│   └── extract-zip.py
 ├── local-run/
 ├── .gitignore
 ├── .pre-commit-config.yaml
@@ -55,61 +55,61 @@ airflow-postgres-etl/
 └── .tool-versions
 ```
 
-## Configurando a Máquina
+## Machine Configuration
 
-- Configure o WSL2 com o seguinte tutorial: <https://github.com/galvsoliveira/airflow-postgres-etl#configuring-wsl2-for-windows-users>
-- Clone o repositório e entre na pasta do projeto usando o terminal do Ubuntu.
-- Rode os seguintes comandos:
+- Configure WSL2 using the following tutorial: <https://github.com/galvsoliveira/airflow-postgres-etl#configuring-wsl2-for-windows-users>
+- Clone the repository and navigate to the project folder using the Ubuntu terminal.
+- Run the following commands:
   - `bash config-scripts/01_config_ubuntu_env.sh`
-    - Reinicie o terminal e rode: `source ~/.bashrc`.
+    - Restart the terminal and run: `source ~/.bashrc`.
   - `bash config-scripts/02_install_asdf_plugins.sh`
   - `bash config-scripts/03_install_proj_dep.sh`
-- Abra o VSCode usando o comando `code .`.
-- Instale o Docker e o Docker Compose.
-  - Para WSL2, siga o tutorial: <https://docs.docker.com/desktop/windows/wsl/>.
-  - Para Ubuntu, siga o tutorial: <https://docs.docker.com/engine/install/ubuntu/>.
-- Renomeie o arquivo `credentials.json.example` para `credentials.json`. As credenciais do exemplo são as mesmas do arquivo `docker-compose.yml`.
+- Open VSCode using the command `code .`.
+- Install Docker and Docker Compose.
+  - For WSL2, follow the tutorial: <https://docs.docker.com/desktop/windows/wsl/>.
+  - For Ubuntu, follow the tutorial: <https://docs.docker.com/engine/install/ubuntu/>.
+- Rename the file `credentials.json.example` to `credentials.json`. The example credentials are the same as in the `docker-compose.yml` file.
 
-## Motivação
+## Motivation
 
-O projeto inicialmente tinha o intuito de criar um ETL para o postgres usando containers, mas devido à flexibilidade do Airflow, e a possibilidade de utilização em diferentes projetos, decidi utilizá-lo para o ETL. O Airflow permite que o ETL seja executado em um ambiente de desenvolvimento, e depois seja facilmente migrado para um ambiente de produção, sem a necessidade de alterar o código.
+The initial aim of the project was to create an ETL for Postgres using containers. However, due to Airflow's flexibility and its applicability to various projects, I decided to use it for the ETL. Airflow allows the ETL to be run in a development environment and then easily migrated to a production environment without changing the code.
 
-## Estrutura do Projeto
+## Project Structure
 
-Ciente das limitações de memoria do Airflow, me certifiquei de pesar o mínimo possível, utilizando o Docker para executar o Postgres e o Airflow, e utilizando o PostgresHook para executar as queries no banco de dados e limpando os batches de dados após cada envio para o banco de dados.
+Considering Airflow's memory limitations, I ensured minimal resource usage by using Docker to run Postgres and Airflow, and utilizing PostgresHook to execute database queries and clear data batches after each database insertion.
 
-Escolhi utilizar a última versão do Airflow disponível no momento, a 2.7.1, e a última versão do Python, a 3.11.5, garanti que as versões do Python no projeto e no Airflow fossem as mesmas, e utilizei o Docker para executar o Airflow e o Postgres. O banco do Postgres utilizado é o mesmo banco do Airflow e para poder acessá-lo, tive que abrir a porta 5432 no arquivo `docker-compose.yml`.
+I chose to use the latest version of Airflow available at the time, 2.7.1, and the latest Python version, 3.11.5. I ensured that the Python versions in the project and Airflow were the same and used Docker to run both Airflow and Postgres. The Postgres database used is the same as the Airflow database, and to access it, I had to open port 5432 in the `docker-compose.yml` file.
 
-O projeto é composto por duas DAGs, `postgres_etl.events_table` e `postgres_etl.tracking_table`. Cada DAG é responsável por enviar os dados para uma tabela do banco, criando-as se necessário. A DAG `postgres_etl.events_table` é responsável por enviar os dados da tabela `events`, e a DAG `postgres_etl.tracking_table` os dados da tabela `tracking`.
+The project consists of two DAGs: `postgres_etl.events_table` and `postgres_etl.tracking_table`. Each DAG is responsible for sending data to a table in the database, creating them if necessary. The `postgres_etl.events_table` DAG handles the `events` table data, and the `postgres_etl.tracking_table` DAG handles the `tracking` table data.
 
-Dividi as colunas entre as tabelas da seguinte forma:
+I divided the columns between the tables as follows:
 
 Tracking:
 
-- oid__id: Chave única
-- Op: Tipo de Operação da transação
-- createdAt: Data de criação do rastreamento
-- updatedAt: Data de atualização do rastreamento
-- lastSyncTracker: Data da última sincronização do rastreamento
-- fileName: Nome do arquivo
-- uploadDate: Data de upload do arquivo
+- oid__id: Unique key
+- Op: Transaction operation type
+- createdAt: Tracking creation date
+- updatedAt: Tracking update date
+- lastSyncTracker: Last tracking sync date
+- fileName: File name
+- uploadDate: File upload date
 
 Events:
 
-- oid__id: Chave estrangeira
-- trackingCode: Código do rastreamento
-- description: Descrição do evento
-- status: Status do evento
-- trackerType: Tipo de rastreamento
-- from: Local de origem
-- to: Local de destino
-- eventCreatedAt: Data de criação do pedido
-- uploadDate: Data de upload do arquivo
-- fileName: Nome do arquivo
+- oid__id: Foreign key
+- trackingCode: Tracking code
+- description: Event description
+- status: Event status
+- trackerType: Tracking type
+- from: Origin location
+- to: Destination location
+- eventCreatedAt: Order creation date
+- uploadDate: File upload date
+- fileName: File name
 
-## Estrutura das DAGs
+## DAGs Structure
 
-Temos duas funções principais que nos ajudam a entender o funcionamento do ETL:
+We have two main functions that help us understand how the ETL works:
 
 ```python
 def send_files_to_postgres(
@@ -124,21 +124,20 @@ def send_files_to_postgres(
     normalize_column=None,
     n_batch=5,
 ):
-    """Envia os arquivos para uma tabela no banco de dados, criando-a se necessário
-    e atualizando os dados se a tabela já existir. O tratamento dos dados é feito
-    com as funções process_data.
+    """Sends the files to a table in the database, creating it if necessary
+    and updating the data if the table already exists. Data processing is done
+    with the process_data functions.
 
     Args:
-        files: Lista com os nomes dos arquivos
-        csv_path: Caminho para os arquivos
-        target_table: Nome da tabela alvo
-        engine: Conexão com o banco de dados, obtida com PostgresHook
-        datetime_columns: Colunas que devem ser do tipo DateTime
-        int_columns: Colunas que devem ser do tipo Integer
-        unique_key: Nome da chave única
-        normalize_column: Lista de colunas que devem ser "explodidas" em linhas
-            e normalizadas
-        filter_columns: Lista de colunas que devem ser mantidas
+        files: List of file names
+        csv_path: Path to the files
+        target_table: Name of the target table
+        engine: Database connection, obtained with PostgresHook
+        datetime_columns: Columns that should be of type DateTime
+        int_columns: Columns that should be of type Integer
+        unique_key: Name of the unique key
+        normalize_column: List of columns to be "exploded" into rows and normalized
+        filter_columns: List of columns to be kept
     """
     file_counter = 0
     df = pd.DataFrame()
@@ -168,7 +167,7 @@ def send_files_to_postgres(
 ```python
 @dag.task
 def extract_treat_and_load(files, last_uploaded_file):
-    """Extrai os dados dos arquivos, trata e carrega no banco de dados"""
+    """Extracts data from files, processes, and loads it into the database"""
     if last_uploaded_file:
         files = [file for file in files if file > last_uploaded_file]
         print("Starting ETL process...")
@@ -186,23 +185,23 @@ def extract_treat_and_load(files, last_uploaded_file):
     )
 ```
 
-Basicamente, checamos todos os arquivos na pasta `data/extracted` e checamos o último arquivo enviado para o banco de dados. Se o último arquivo enviado for o mesmo que o último arquivo na pasta, não fazemos nada. Caso contrário, enviamos os arquivos para o banco de dados a partir do último arquivo enviado. O tratamento dos dados é feito com a função `process_data`, que faz o seguinte:
+Basically, we check all the files in the `data/extracted` folder and check the last file sent to the database. If the last file sent is the same as the last file in the folder, we do nothing. Otherwise, we send the files to the database starting from the last file sent. Data processing is done with the `process_data` function, which does the following:
 
 ```python
 def process_data(
     df, datetime_columns, unique_key, normalize_column=None, filter_columns=None
 ):
-    """Processa os dados antes de enviá-los para o banco de dados
+    """Processes data before sending it to the database
 
     Args:
-        df: dataframe com os dados
-        datetime_columns: colunas que devem ser do tipo DateTime
-        unique_key: nome da chave única
-        normalize_column (str, optional): coluna que deve ser "explodida" em linhas
-        filter_columns (list, optional): colunas que devem ser mantidas
+        df: Dataframe with the data
+        datetime_columns: Columns that should be of type DateTime
+        unique_key: Name of the unique key
+        normalize_column (str, optional): Column to be "exploded" into rows
+        filter_columns (list, optional): Columns to be kept
 
     Returns:
-        df: dataframe com os dados processados
+        df: Dataframe with processed data
     """
     df.drop_duplicates(subset=[unique_key], keep="last")
     if normalize_column:
@@ -211,7 +210,7 @@ def process_data(
     # Convert timestamp columns to datetime
     cols_to_fix = set(datetime_columns).intersection(df.columns)
     for col in cols_to_fix:
-        if col == "createdAt.$date":
+        if (col == "createdAt.$date"):
             df.loc[:, col] = pd.to_datetime(df.loc[:, col], unit="ms")
             df = df.rename(columns={col: "orderCreatedAt"})
         else:
@@ -223,35 +222,37 @@ def process_data(
     if filter_columns:
         df = df[filter_columns + ["uploadDate", "fileName"]]
 
-    # Remove values that will have error while sending to Postgres
+    # Remove values that will cause errors when sending to Postgres
     df = df.replace(
-        {"NaN": None, "NaT": None, "None": None, "": None, pd.NaT: None}
+        {"NaN":
+
+ None, "NaT": None, "None": None, "": None, pd.NaT: None}
     ).drop_duplicates()
     return df
 ```
 
-A função `process_data` é flexível o bastante para tratar os dados de acordo com as necessidades de cada tabela, permitindo mudar o tipo de colunas, normalizar colunas e filtrar colunas. O replace no final é necessário porque o pandas não consegue converter alguns valores para None, e o Postgres não aceita valores como "NaN" ou "NaT". Atenção: o parâmetro `unique_key` pode ser ambiguo, pois é a chave única da tabela principal antes do explode e não depois.
+The `process_data` function is flexible enough to handle data according to each table's needs, allowing column type changes, column normalization, and column filtering. The replace operation at the end is necessary because pandas cannot convert some values to None, and Postgres does not accept values like "NaN" or "NaT". Note: the `unique_key` parameter can be ambiguous, as it is the unique key of the main table before the explode operation, not after.
 
-## Rodando o Projeto
+## Running the Project
 
-Decidi por subir os csvs para o repositório para facilitar a execução do projeto, mas caso queira extrair os dados do zip, rode o script `initial-script/extract-zip.py`. Para rodar o projeto, siga os seguintes passos:
+I decided to upload the CSVs to the repository to facilitate project execution, but if you want to extract the data from the zip file, run the script `initial-script/extract-zip.py`. To run the project, follow these steps:
 
-- No terminal, rode:
-  - `cd local-run`, para entrar na pasta local-run.
-  - `chmod +x ./local-run`, para dar permissão de execução ao script.
-  - `./local-run build-and-start`, pára construir o container do airflow e do postgres e iniciar o projeto. Para parar o projeto, rode `./local-run stop`.
+- In the terminal, run:
+  - `cd local-run` to navigate to the local-run folder.
+  - `chmod +x ./local-run` to give execute permission to the script.
+  - `./local-run build-and-start` to build the Airflow and Postgres containers and start the project. To stop the project, run `./local-run stop`.
 
-Agora, para acessar o Airflow, abra o navegador e digite `localhost:8080`. O usuário e senha são `airflow`. Rode as DAGs `postgres_etl.events_table` e `postgres_etl.tracking_table` para executar o ETL.
+Now, to access Airflow, open your browser and go to `localhost:8080`. The username and password are `airflow`. Run the DAGs `postgres_etl.events_table` and `postgres_etl.tracking_table` to execute the ETL.
 
 ![Alt text](data/image-1.png)
 
-O lineage das DAGs é o seguinte:
+The DAGs lineage is as follows:
 
 ![Alt text](data/image-2.png)
 
-## Queries de teste
+## Test Queries
 
-Para testar o projeto, use as seguintes credenciais do Postgres para fazer a conexão:
+To test the project, use the following Postgres credentials to connect:
 
 ```txt
 host: localhost
@@ -261,46 +262,46 @@ password: airflow
 database: postgres
 ```
 
-Você pode uma extensão do VSCode com id `cweijan.vscode-postgresql-client2` (busque no marketplace de extensões do VSCode) para fazer as queries diretamente no VSCode. Seguem algumas queries de teste:
+You can use a VSCode extension with id `cweijan.vscode-postgresql-client2` (search for it in the VSCode extension marketplace) to run the queries directly in VSCode. Here are some test queries:
 
-Total de rastreamentos criados por minuto:
+Total trackings created per minute:
 
 ```sql
 SELECT
     DATE_TRUNC('minute', "createdAt") AS minute,
-    COUNT(*) AS total_rastreamentos
+    COUNT(*) AS total_trackings
 FROM
     public.tracking
 GROUP BY
     minute
 ORDER BY
     minute
-limit 1000
+LIMIT 1000;
 ```
 
-Total de eventos por minuto:
+Total events per tracking code:
 
 ```sql
 SELECT
     "trackingCode",
-    count(*) AS total_eventos
+    COUNT(*) AS total_events
 FROM
     public.events
 GROUP BY
-    1
+    "trackingCode"
 ORDER BY
-    total_eventos DESC
+    total_events DESC
 LIMIT 1000;
 ```
 
-Ranking das 10 descrições mais comuns:
+Top 10 most common descriptions:
 
 ```sql
 WITH ranked_events AS (
     SELECT
         "description",
-        count(*) AS total_eventos,
-        RANK() OVER (ORDER BY count(*) DESC) AS event_rank
+        COUNT(*) AS total_events,
+        RANK() OVER (ORDER BY COUNT(*) DESC) AS event_rank
     FROM
         public.events
     GROUP BY
@@ -308,7 +309,7 @@ WITH ranked_events AS (
 )
 SELECT
     "description",
-    total_eventos,
+    total_events,
     event_rank
 FROM
     ranked_events
@@ -318,22 +319,22 @@ ORDER BY
     event_rank;
 ```
 
-## Potenciais Problemas a Serem Investigados em Próximas Versões
+## Potential Issues for Future Versions
 
-Como fazemos um explode seguido de uma normalização, o número de linhas por arquivo escala bastante, o que faz o envio de dados para o banco de dados demorar muito no caso da tabela de eventos (cerca de 2 horas). Notei também que esse problema de perfomance é devido ao DELETE ser usado antes do INSERT e com diversos parâmetros. Escolhi utilizar esse método pois funciona em qualquer banco de dados, apesar de só depois eu descobrir que o SQLAlchemy não funciona com o Redshift.
+Since we perform an explode followed by normalization, the number of rows per file scales significantly, causing data upload to the database to take a long time for the events table (about 2 hours). I also noticed that this performance issue is due to the DELETE being used before the INSERT with various parameters. I chose this method because it works with any database, although I later discovered that SQLAlchemy does not work with Redshift.
 
-Temos 2 opções para resolver o problema de performance, a primeira seria não fazer o DELETE+INSERT e sim um UPSERT mesmo, mas que não consegui fazer funcionar, e a segunda seria mudar a abordagem de um ETL para um ELT, levando os dados brutos diretamente para o banco e fazendo um QUALIFY numa tabela temporaria e inserindo na tabela final com um insert.
+We have two options to solve the performance issue: the first would be not to do the DELETE+INSERT but rather an UPSERT, which I couldn't get to work, and the second would be to change the approach from an ETL to an ELT, transferring raw data directly to the database, performing a QUALIFY in a temporary table, and inserting it into the final table with an insert.
 
-## Melhorias
+## Improvements
 
-Uma melhoria legal que pode ser feita nesse projeto é a utilização do MongoDB para armazenar os dados brutos, e o Postgres para armazenar os dados tratados. O MongoDB é um banco de dados não relacional, e é muito utilizado para armazenar dados provenientes de Tech, enquanto o Postgres acaba sendo mais utilizado para armazenar dados tratados. O Airflow permite fazer a conexão com o MongoDB e o Postgres, então seria possível fazer essa migração facilmente.
+One improvement for this project could be using MongoDB to store raw data and Postgres to store processed data. MongoDB is a non-relational database commonly used for storing data from tech sources, while Postgres is more commonly used for storing processed data. Airflow allows connections with both MongoDB and Postgres, so this migration would be feasible.
 
-Outra melhoria interessante seria o dbt, que é uma ferramenta de transformação de dados. O dbt permite que as transformações sejam feitas no próprio banco de dados, e também permite a criação de testes automatizados para garantir a qualidade dos dados. Dessa forma, teríamos um ELT, em que os dados brutos são contidos no MongoDB, replicados para o Postgres, e transformados no próprio Postgres com o dbt. Acredito que essa seria uma solução mais escalável e possivelmente mais rápida, já que os dados já estariam dentro do banco e o envio e tratamento não ficariam abrindo e fechando conexões com o banco de dados, além de podermos implementar diversos testes de forma bastante simples com o dbt, garantindo a qualidade dos dados.
+Another interesting improvement would be using dbt, a data transformation tool. dbt allows transformations to be performed in the database itself and enables the creation of automated tests to ensure data quality. Thus, we would have an ELT process where raw data is stored in MongoDB, replicated to Postgres, and transformed in Postgres using dbt. I believe this would be a more scalable and possibly faster solution, as the data would already be within the database and the transfer and processing would not involve opening and closing database connections, plus implementing various tests with dbt would be quite simple, ensuring data quality.
 
-## Referências
+## References
 
-O projeto foi baseado em um projeto anterior meu (<https://github.com/galvsoliveira/python-poetry-production-level-repository-template>) e nos seguinte tutoriais:
-- <https://www.youtube.com/watch?v=mMqaiNbeeUU&t=943s&ab_channel=Codifike>. Para configurar o Airflow e o Postgres.
-- <https://essentl.io/running-astronomer-cosmos-in-mwaa/> Para alterar o docker-compose.yml.
+The project was based on a previous project of mine (<https://github.com/galvsoliveira/python-poetry-production-level-repository-template>) and the following tutorials:
+- <https://www.youtube.com/watch?v=mMqaiNbeeUU&t=943s&ab_channel=Codifike>. For setting up Airflow and Postgres.
+- <https://essentl.io/running-astronomer-cosmos-in-mwaa/> For modifying the docker-compose.yml.
 
-Ressalto que também já tinha conhecimento prévio sobre o Airflow em experiências profissionais.
+I also had prior knowledge of Airflow from professional experiences.
